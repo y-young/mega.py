@@ -878,26 +878,53 @@ class Mega:
             self.get_files()
         return self.root_id
 
-    def create_folder(self, name, dest=None):
-        dirs = tuple(dir_name for dir_name in str(name).split('/') if dir_name)
-        folder_node_ids = {}
-        for idx, directory_name in enumerate(dirs):
-            existing_node_id = self.find_path_descriptor(directory_name)
+    def create_folder(self, path, parent = None):
+        """
+        Create folders by path. i.e.: folder1/folder2/folder3
+
+        params:
+            path, string like folder1/folder2/folder3
+            parent, ID of parent node
+
+        return:
+            a mapping of folder path and their IDs
+            e.g.
+            {
+                'folder1': 'ID1',
+                'folder1/folder2': 'ID2',
+                'folder1/folder2/folder3': 'ID3'
+            }
+        """
+
+        # Get all files in advance so that we don't need to call API in every loop
+        files = self.get_files()
+        dirs = tuple(dir_name for dir_name in str(path).split('/') if dir_name)
+        paths = []
+        folder_node_ids = []
+        parent_dirs = []
+        for directory_name in dirs:
+            parent_dirs.append(directory_name)
+            current_path = '/'.join(parent_dirs)
+            paths.append(current_path)
+
+            existing_node_id = self.find_path_descriptor(current_path, files)
             if existing_node_id:
-                folder_node_ids[idx] = existing_node_id
+                folder_node_ids.append(existing_node_id)
                 continue
-            if idx == 0:
-                if dest is None:
-                    parent_node_id = self._root_node_id()
+
+            if len(folder_node_ids) == 0:
+                if parent is None:
+                    parent_node_id = self.api._root_node_id()
                 else:
-                    parent_node_id = dest
+                    parent_node_id = parent
             else:
-                parent_node_id = folder_node_ids[idx - 1]
+                parent_node_id = folder_node_ids[-1]
+
             created_node = self._mkdir(name=directory_name,
                                        parent_node_id=parent_node_id)
             node_id = created_node['f'][0]['h']
-            folder_node_ids[idx] = node_id
-        return dict(zip(dirs, folder_node_ids.values()))
+            folder_node_ids.append(node_id)
+        return dict(zip(paths, folder_node_ids))
 
     def rename(self, file, new_name):
         file = file[1]
