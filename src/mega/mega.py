@@ -307,6 +307,7 @@ class Mega:
                         if parent_desc == file[1]['p']:
                             parent_desc = file[0]
                             found = True
+                            break
                 if found:
                     found = False
                 else:
