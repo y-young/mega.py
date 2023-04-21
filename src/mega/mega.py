@@ -914,7 +914,7 @@ class Mega:
 
             if len(folder_node_ids) == 0:
                 if parent is None:
-                    parent_node_id = self.api._root_node_id()
+                    parent_node_id = self._root_node_id()
                 else:
                     parent_node_id = parent
             else:
